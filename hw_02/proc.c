@@ -111,6 +111,7 @@ found:
   p->context = (struct context*)sp;
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
+  p->mask = 0;
 
   return p;
 }
@@ -199,6 +200,7 @@ fork(void)
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
+  np->mask = curproc->mask;
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
