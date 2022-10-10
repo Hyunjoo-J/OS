@@ -68,7 +68,7 @@ void  update_min_priority()
 
 void assign_min_priority(sturct proc *proc)
 {
-  
+  proc->priority = ptable.min_priority; 
 }
 
 void
@@ -137,8 +137,11 @@ allocproc(void)
   return 0;
 
 found:
+  weight++;
   p->state = EMBRYO;
   p->pid = nextpid++;
+
+  assign_min_priority(p);
 
   release(&ptable.lock);
 
@@ -397,6 +400,8 @@ scheduler(void)
       swtch(&(c->scheduler), p->context);
       switchkvm();
 
+      ssu_schedule();
+
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       c->proc = 0;
@@ -511,8 +516,10 @@ wakeup1(void *chan)
   struct proc *p;
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    if(p->state == SLEEPING && p->chan == chan)
+    if(p->state == SLEEPING && p->chan == chan){
       p->state = RUNNABLE;
+      assign_min_priority(p);
+    }
 }
 
 // Wake up all processes sleeping on chan.
@@ -582,4 +589,11 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+void do_weightset(int weight)
+{
+  acquire(&ptable.lock);
+  myproc()->weight = weight;
+  release(&ptable.lock);
 }
