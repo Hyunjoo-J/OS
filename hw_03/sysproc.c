@@ -96,5 +96,6 @@ sys_weightset(void)
   int weight;
   if (argint(0, &weight) < 0)
     return -1;
-  return do_weightset(weight);
+  do_weightset(weight);
+  return 0;
 }

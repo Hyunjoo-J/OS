@@ -57,7 +57,7 @@ void  update_min_priority()
   struct proc *p;
 
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
-        if (p->state == RUNNABLE {
+        if (p->state == RUNNABLE) {
              if (min == NULL || (min->priority > p->priority))
                  min = p;
          }
@@ -66,7 +66,7 @@ void  update_min_priority()
     ptable.min_priority = min->priority;
 }
 
-void assign_min_priority(sturct proc *proc)
+void assign_min_priority(struct proc *proc)
 {
   proc->priority = ptable.min_priority; 
 }
@@ -137,11 +137,11 @@ allocproc(void)
   return 0;
 
 found:
-  weight++;
+  weight++; //20181296
   p->state = EMBRYO;
   p->pid = nextpid++;
 
-  assign_min_priority(p);
+  assign_min_priority(p); //20181296
 
   release(&ptable.lock);
 
@@ -176,6 +176,8 @@ userinit(void)
 {
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
+
+  ptable.min_priority = 3; //20181296
 
   p = allocproc();
   
@@ -385,27 +387,25 @@ scheduler(void)
     sti();
 
     // Loop over process table looking for process to run.
-    acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
-
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
-
-      swtch(&(c->scheduler), p->context);
-      switchkvm();
-
-      ssu_schedule();
-
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      c->proc = 0;
+    acquire(&ptable.lock); 
+    p = ssu_schedule(); //20181296
+    if (p == NULL) {
+      release(&ptable.lock);
+      continue;
     }
+
+    c->proc = p;
+    switchuvm(p);
+    p->state = RUNNING;
+
+    swtch(&(c->scheduler), p->context);
+    switchkvm();
+
+    update_priority(p); //20181296
+    update_min_priority(); //20181296
+
+    c->proc = 0;
+
     release(&ptable.lock);
 
   }
@@ -518,7 +518,7 @@ wakeup1(void *chan)
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if(p->state == SLEEPING && p->chan == chan){
       p->state = RUNNABLE;
-      assign_min_priority(p);
+      assign_min_priority(p); //20181296
     }
 }
 
