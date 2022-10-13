@@ -595,5 +595,5 @@ void do_weightset(int weight)
 {
   acquire(&ptable.lock);
   myproc()->weight = weight;
-  release(&ptable.lock);
+	release(&ptable.lock);
 }
