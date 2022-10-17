@@ -10,7 +10,7 @@
 #define TIME_SLICE 10000000
 #define NULL ((void *)0)
 
-int weight = 1;
+int  weight = 1;
 
 struct {
   struct spinlock lock;
@@ -48,7 +48,7 @@ struct proc *ssu_schedule()
 
 void  update_priority(struct proc *proc)
 {
-  proc->priority = proc->priority + (TIME_SLICE/weight);
+  proc->priority = proc->priority + (TIME_SLICE/proc->weight);
 }
 
 void  update_min_priority()
@@ -137,7 +137,7 @@ allocproc(void)
   return 0;
 
 found:
-  weight++; //20181296
+  p->weight = weight++; //20181296
   p->state = EMBRYO;
   p->pid = nextpid++;
 
@@ -373,7 +373,7 @@ wait(void)
 // Scheduler never returns.  It loops, doing:
 //  - choose a process to run
 //  - swtch to start running that process
-//  - eventually that process transfers control
+//  - eventually that process transfers econtrol
 //      via swtch back to the scheduler.
 void
 scheduler(void)
@@ -387,7 +387,7 @@ scheduler(void)
     sti();
 
     // Loop over process table looking for process to run.
-    acquire(&ptable.lock); 
+    acquire(&ptable.lock);
     p = ssu_schedule(); //20181296
     if (p == NULL) {
       release(&ptable.lock);
