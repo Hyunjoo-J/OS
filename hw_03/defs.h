@@ -120,6 +120,10 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
+struct proc     *ssu_scheduler(void);
+void            assign_min_priority(struct proc*);
+void            update_priority(struct proc*);
+void            update_min_priority(void);
 void            do_weightset(int weight);
 
 // swtch.S

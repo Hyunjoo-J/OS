@@ -91,10 +91,13 @@ sys_uptime(void)
 }
 
 int
-sys_weightset(int weight)
+sys_weightset(void)
 {
-  if (argint(0, &weight) < 0)
+  int weight;
+  if (argint(0, &weight) < 0) //0번째 argument를 weight에 저장
     return -1;
-  do_weightset(weight);
+  if (weight <= 0) //weight 값은 항상 0보다 크기 때문에 그 외의 경우 에러 처리
+    return -1;
+  do_weightset(weight); //do_weightset으로 weight값 설정
   return 0;
 }

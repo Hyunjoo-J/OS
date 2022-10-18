@@ -90,7 +90,7 @@ ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]nopie'),)
 CFLAGS += -fno-pie -nopie
 endif
 
-# 20181296 DDEBUG
+#20181296 debug 값이 1로 설정되면 CFLAGS에 DDEBUG 추가, DDEBUG : DEBUG 옵션
 ifeq ($(debug), 1)
 CFLAGS += -DDEBUG
 endif
@@ -184,10 +184,10 @@ UPROGS=\
 	_rm\
 	_sh\
 	_stressfs\
-	_sdebug\
 	_usertests\
 	_wc\
 	_zombie\
+	_sdebug\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -223,8 +223,9 @@ GDBPORT = $(shell expr `id -u` % 5000 + 25000)
 QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
 	then echo "-gdb tcp::$(GDBPORT)"; \
 	else echo "-s -p $(GDBPORT)"; fi)
+#20181296 CPU 코어 개수를 1개로 제한
 ifndef CPUS
-CPUS := 1 #20181296
+CPUS := 1
 endif
 QEMUOPTS = -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -smp $(CPUS) -m 512 $(QEMUEXTRA)
 
@@ -254,7 +255,7 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 # rename it to rev0 or rev1 or so on and then
 # check in that version.
 
-# 20181296 sdebug.c 추가
+#20181296 sdebug.c 추가
 EXTRA=\
 	mkfs.c ulib.c user.h cat.c echo.c forktest.c grep.c kill.c\
 	ln.c ls.c mkdir.c rm.c stressfs.c sdebug.c usertests.c wc.c zombie.c\

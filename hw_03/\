@@ -31,16 +31,14 @@ struct proc *ssu_schedule()
   struct proc *p;
   struct proc *ret = NULL;
 
-  //상태가 RUNNABLE이고 가장 작은 priority 값을 갖는 p(프로세스)를 ret으로 설정
    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
-      if (p->state == RUNNABLE) { 
+      if (p->state == RUNNABLE) {
               if (ret == NULL || (ret->priority > p->priority)) {
                   ret = p;
               }
           }
      }
 
-//DEBUG값이 1로 들어오면 PID, NAME, WEIGHT, PRIORITY를 출력
 #ifdef DEBUG
   if (ret)
     cprintf("PID: %d, NAME: %s, WEIGHT: %d, PRIORITY: %d\n", ret->pid, ret->name, ret->weight, ret->priority);
@@ -48,20 +46,16 @@ struct proc *ssu_schedule()
   return ret;
 }
 
-//old priority를 이용하여 new priority를 설정
 void  update_priority(struct proc *proc)
 {
   proc->priority = proc->priority + (TIME_SLICE/proc->weight);
 }
 
-//현재 ptable의 minpriority 값을 업데이트
 void  update_min_priority()
 {
   struct proc *min = NULL;
   struct proc *p;
 
-//현재 ptable에 존재하는 프로세스 RUNNABLE 상태이고
-//가장 작은 priority 값을 가지는 프로세스를 min에 저장
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
         if (p->state == RUNNABLE) {
              if (min == NULL || (min->priority > p->priority))
@@ -72,7 +66,6 @@ void  update_min_priority()
     ptable.min_priority = min->priority;
 }
 
-//프로세스가 생성 또는 wake up 될 때, 최소 priority 값 할당
 void assign_min_priority(struct proc *proc)
 {
   proc->priority = ptable.min_priority; 
@@ -143,12 +136,11 @@ allocproc(void)
   release(&ptable.lock);
   return 0;
 
-found: //현재 할당하려는 프로세스의 weight값을 정하고 weight를 1 증가시킴
+found:
   p->weight = weight++; //20181296
   p->state = EMBRYO;
   p->pid = nextpid++;
 
-//ptable 중 가장 작은 priority 값 할당
   assign_min_priority(p); //20181296
 
   release(&ptable.lock);
@@ -185,7 +177,7 @@ userinit(void)
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
 
-  ptable.min_priority = 3; //20181296 최소 priority 값(initcode, init, sh)
+  ptable.min_priority = 3; //20181296
 
   p = allocproc();
   
@@ -396,8 +388,8 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    p = ssu_schedule(); //20181296 ssu_schedule 실행 - 우선 순위가 가장 높은 process 가져옴
-    if (p == NULL) { //프로세스가 없으면 lock 해제 후 continue
+    p = ssu_schedule(); //20181296
+    if (p == NULL) {
       release(&ptable.lock);
       continue;
     }
@@ -409,8 +401,8 @@ scheduler(void)
     swtch(&(c->scheduler), p->context);
     switchkvm();
 
-    update_priority(p); //20181296 priority 값 갱신
-    update_min_priority(); //20181296 최소 priority 값 갱신
+    update_priority(p); //20181296
+    update_min_priority(); //20181296
 
     c->proc = 0;
 
@@ -526,7 +518,7 @@ wakeup1(void *chan)
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if(p->state == SLEEPING && p->chan == chan){
       p->state = RUNNABLE;
-      assign_min_priority(p); //20181296 wake up시킨 프로세스에 최소 priority 값 할당
+      assign_min_priority(p); //20181296
     }
 }
 
@@ -599,7 +591,6 @@ procdump(void)
   }
 }
 
-//ptable lock한 후에 현재 프로세스의 weight를 인자로 받은 weight로 설정, 그 후에 lock 해제
 void do_weightset(int weight)
 {
   acquire(&ptable.lock);
