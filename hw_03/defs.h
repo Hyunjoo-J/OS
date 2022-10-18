@@ -120,6 +120,7 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
+//20181296
 struct proc     *ssu_scheduler(void);
 void            assign_min_priority(struct proc*);
 void            update_priority(struct proc*);
