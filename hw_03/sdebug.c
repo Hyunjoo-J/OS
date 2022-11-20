@@ -8,6 +8,7 @@
 
 void sdebug_func(void)
 {
+<<<<<<< Updated upstream
    int n,pid;
 
    printf(1, "start sdebug command\n");
@@ -57,10 +58,53 @@ void sdebug_func(void)
   	}
 
    printf(1, "end of sdebug command\n"); //sdebug 종료
+=======
+	int n, pid;
+	int start, end;
+	long long counter;
+
+	printf(1, "start sdebug command\n");
+
+	for (int i = 0; i < PNUM; i++)
+	{
+		pid = fork();
+		if(pid < 0)
+			break;
+		if(pid == 0)
+			{
+				start = uptime();
+				while (true){
+					counter = uptime() - start;
+					if (counter >= TOTAL_COUNTER)
+						exit();
+					if (counter >= PRINT_CYCLE)
+						printf(1, "dddd");
+				}
+			}
+	}
+	  for(; n > 0; n--){
+    	if(wait() < 0){
+      		printf(1, "wait stopped early\n");
+      		exit();
+    	}
+  }
+    if(wait() != -1){
+    printf(1, "wait got too many\n");
+    exit();
+  }
+
+	printf(1, "end of sdebug command\n");
+>>>>>>> Stashed changes
 }
 
 int main(void)
 {
+<<<<<<< Updated upstream
    sdebug_func();
    exit();
 }
+=======
+	sdebug_func();
+	exit();
+}
+>>>>>>> Stashed changes
