@@ -50,7 +50,7 @@ int main()
 		printf("Usage Error : 1 또는 2를 입력하시오.\n");
 		return (0);
 	}
-	if (info.data_input = 1){
+	if (info.data_input == 1){
 		printf("C-1.입력 스트림 개수를 입력하시오.\n");
 		scanf("%d", &info.stream_size);
 	}
