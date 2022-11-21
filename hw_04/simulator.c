@@ -53,6 +53,9 @@ int main()
 	if (info.data_input == 1){
 		printf("C-1.입력 스트림 개수를 입력하시오.\n");
 		scanf("%d", &info.stream_size);
+		if (info.stream_size < 1 || info.stream_size > MAX_STREAM){
+			printf("Usage Error : 1 ~ 100000 사이의 값을 입력하시오.");
+		}
 	}
 	else{
 		printf("C-2.파일명을 입력하시오.\n");

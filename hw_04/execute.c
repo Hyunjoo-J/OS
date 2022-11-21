@@ -7,11 +7,13 @@ static const void (*fun[]) (t_info) = {
 	exe_LRU,
 	exe_LFU,
 	exe_SC,
-	exe_ESC,
+	// exe_ESC,
 };
 
 int stream[MAX_STREAM];
 int frame[10];
+int frame_bit[10];
+int cnt[31];
 int stream_size;
 
 void start_simul(t_info info){
@@ -19,10 +21,9 @@ void start_simul(t_info info){
 		getData_random(info);
 	else
 		getData_file(info);
-	//print_stream 생략
 	exe_Optimal(info);
 
-	for (int i = 1; i < 7; i++){
+	for (int i = 1; i < 6; i++){
 		if (info.algo[i] == 1){
 			printf("===%s execute===\n", algo[i]);
 			init(i);
@@ -57,7 +58,6 @@ void getData_file(t_info info){
 		fread(&buffer, sizeof(buffer), 1, file);
 		if (buffer == ' '){
 			stream[idx] = num;
-			printf("%d %d\n", stream[idx], num);
 			idx++;
 			num = 0;
 		}
@@ -98,7 +98,7 @@ void exe_Optimal(t_info info){
             int temp;
 			int use = -1;
             for(int i = 0; i < info.frame_size; i++) {
-                temp = use_frame(frame[i], idx, info);
+                temp = optimal_use(frame[i], idx);
                 if(use < temp){
                     target = i;
                     use = temp;
@@ -130,7 +130,7 @@ void exe_FIFO(t_info info){
 			}
 		}
 
-		if (is_fault = 1)
+		if (is_fault == 1)
 			page_fault++;
 		if (page_fault <= info.frame_size && is_fault){ //page frame 다 적재되지 않은 상태
 			target = 0;
@@ -138,7 +138,7 @@ void exe_FIFO(t_info info){
 				target = (target + 1) % info.frame_size;
 		}
 		else if (is_fault){ //가장 먼저 들어온 page 찾기
-			target = (page_fault + 1) % info.frame_size;
+			target = (page_fault - 1) % info.frame_size;
 		}
 		frame[target] = stream[idx];
 		print(info, is_fault, target, idx);
@@ -161,7 +161,7 @@ void exe_LIFO(t_info info){
 			}
 		}
 
-		if (is_fault = 1)
+		if (is_fault == 1)
 			page_fault++;
 		if (page_fault <= info.frame_size && is_fault){ //page frame 다 적재되지 않은 상태
 			target = 0;
@@ -192,14 +192,14 @@ void exe_LRU(t_info info){
 			}
 		}
 
-		if (is_fault = 1)
+		if (is_fault == 1)
 			page_fault++;
 		if (page_fault <= info.frame_size && is_fault){ //page frame 다 적재되지 않은 상태
 			target = 0;
 			while (frame[target] != -1)
-				target = (page_fault - 1) % info.frame_size;
+				target = (target + 1) % info.frame_size;
 		}
-		else if (is_fault){ //가장 나중에 들어온 page 찾기
+		else if (is_fault){ //가장 오래된 페이지 찾기
 			int use = -1;
 			int temp;
 			for (int i = 0; i < info.frame_size; i++){
@@ -218,6 +218,77 @@ void exe_LRU(t_info info){
 	printf("page fault : %d\n", page_fault);
 }
 
+void exe_LFU(t_info info){
+	int is_fault, page_fault = 0;
+	int target; //target : 교체 페이지
+
+	for (int idx = 0; idx < stream_size; idx++){
+		is_fault = 1;
+
+		for (int i = 0; i < info.frame_size; i++){ //page fault 발생 여부 확인
+			if (frame[i] == stream[idx]){
+				is_fault = 0;
+				target = i;
+			}
+		}
+
+		if (is_fault == 1)
+			page_fault++;
+		if (page_fault <= info.frame_size && is_fault){ //page frame 다 적재되지 않은 상태
+			target = 0;
+			while (frame[target] != -1)
+				target = (target + 1) % info.frame_size;
+		}
+		else if (is_fault){ //가장 적게 사용된 page 찾기
+			target = lfu_use(idx, info.frame_size);
+		}
+		cnt[stream[idx]]++;
+		frame[target] = stream[idx];
+		print(info, is_fault, target, idx);
+		fprint(info, is_fault, target, idx, 4);
+	}
+	printf("===LFU result===\n");
+	printf("page fault : %d\n", page_fault);
+}
+
+void exe_SC(t_info info){
+	int is_fault, page_fault = 0;
+	int ptr = 0;
+	int target; //target : 교체 페이지
+
+	for (int idx = 0; idx < stream_size; idx++){
+		is_fault = 1;
+
+		for (int i = 0; i < info.frame_size; i++){ //page fault 발생 여부 확인
+			if (frame[i] == stream[idx]){
+				is_fault = 0;
+				target = i;
+				frame_bit[i] = 1;
+			}
+		}
+
+		if (is_fault == 1)
+			page_fault++;
+		while (is_fault){
+			if (frame_bit[ptr] == 0){ // 페이지 교체
+				target = ptr;
+				ptr = (ptr + 1) % info.frame_size;
+				break;
+			}
+			else if (frame_bit[ptr] == 1){ // 페이지 교체 하지 않고 넘어감
+				frame_bit[ptr] = 0;
+				ptr = (ptr + 1) % info.frame_size;
+				continue; // 교체할 페이지를 찾아 계속 진행
+			}
+		}
+		frame[target] = stream[idx];
+		print(info, is_fault, target, idx);
+		fprint(info, is_fault, target, idx, 5);
+	}
+	printf("===SC result===\n");
+	printf("page fault : %d\n", page_fault);
+}
+
 void init(int algo){
 	FILE* file = fopen(filename[algo], "w");
 	fclose(file);
@@ -227,7 +298,7 @@ void init(int algo){
 }
 
 //현재 위치로부터 몇 번째 뒤에 같은 stream이 나타나는지 확인
-int use_frame(int num, int pos, t_info info){
+int optimal_use(int num, int pos){
 	int ret = 0;
 	while (pos <= stream_size){
 		if (stream[pos] == num)
@@ -236,6 +307,34 @@ int use_frame(int num, int pos, t_info info){
 		pos++;
 	}
 	return ret;
+}
+
+//현재 위치부터 몇 번째 전에 같은 stream이 나타나는지 확인
+int lru_use(int num, int pos){
+	int ret = 0;
+	while (pos >= 0){
+		if (stream[pos] == num)
+			return ret;
+		ret++;
+		pos--;
+	}
+}
+
+//가장 적게 사용한 page 찾기, 동일 횟수 존재 시 앞에 있는 것 부터 교체
+int lfu_use(int pos, int frame_size){
+	int ret, min_freq = MAX_INT;
+    for(int i=0; i<frame_size; i++) {
+        if(cnt[frame[i]] == min_freq){
+            if(lru_use(frame[i], pos) < lru_use(frame[ret], pos)) continue;
+            min_freq = cnt[frame[i]];
+            ret = i;
+        }
+        if(cnt[frame[i]] < min_freq){
+            min_freq = cnt[frame[i]];
+            ret = i;
+        }
+    }
+    return ret;
 }
 
 void print(t_info info, int is_fault, int target, int idx){
@@ -250,7 +349,7 @@ void print(t_info info, int is_fault, int target, int idx){
 	printf(" : ");
 	for (int i = 0; i < info.frame_size; i++){
 		if(frame[i] == -1){
-			printf("   -");
+			printf("   X");
 		}
 		else if(i == target){
 			printf("\033[0;31m");
@@ -278,7 +377,7 @@ void fprint(t_info info, int is_fault, int target, int idx, int algo){
 	fprintf(file, " : ");
 	for (int i = 0; i < info.frame_size; i++){
 		if(frame[i] == -1){
-			fprintf(file, "   -");
+			fprintf(file, "   X");
 		}
 		else
 			fprintf(file, "%4d", frame[i]);

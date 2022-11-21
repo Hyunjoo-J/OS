@@ -9,6 +9,7 @@
 # include <fcntl.h>
 
 #define MAX_STREAM 100000
+#define MAX_INT 2147483647
 
 typedef struct s_info{
 	int algo[7];		// 7개의 알고리즘 실행 여부
@@ -31,9 +32,11 @@ void exe_LIFO(t_info info);
 void exe_LRU(t_info info);
 void exe_LFU(t_info info);
 void exe_SC(t_info info);
-void exe_ESC(t_info info);
+// void exe_ESC(t_info info);
 void init(int algo);
-int use_frame(int num, int pos, t_info info);
+int optimal_use(int num, int pos);
+int lru_use(int num, int pos);
+int lfu_use(int pos, int frame_size);
 void print(t_info info, int is_fault, int target, int idx);
 void fprint(t_info info, int is_fault, int target, int idx, int algo);
 #endif
